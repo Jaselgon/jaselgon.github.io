@@ -1,0 +1,39 @@
+<!--common CSS properties webpage-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            body {
+                background-color:darkseagreen;
+                color: darkgreen;
+            }
+
+            table {
+                background-color: paleturquoise;
+                color: deepskyblue;
+                font-family: monospace;
+            }
+        </style>>
+    </head>
+
+    <body>
+        <table>
+            <thead>
+                <tr>
+                    <th>CSS selector</th>
+                    <th>example properties</th>    
+                </tr>
+
+                <tr>
+                    <td>display</td>
+                    <td>inline, block, block-inline</td>
+                </tr>
+
+                <tr>
+                    <td>z-index</td>
+                    <td>1, 2, 3, ...</td>
+                </tr>
+            </thead>
+        </table>
+    </body>
+</html>
