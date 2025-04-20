@@ -1,1 +1,99 @@
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
 
+species = pd.read_csv('species_info.csv')
+obs = pd.read_csv('observations.csv')
+
+species_obs = pd.merge(species, obs, how='right')
+
+species_obs_bryce = species_obs[species_obs['park_name']=='Bryce National Park']
+species_obs_smoky = species_obs[species_obs['park_name']=='Great Smoky Mountains National Park']
+species_obs_yosemite = species_obs[species_obs['park_name']=='Yosemite National Park']
+species_obs_yellowstone = species_obs[species_obs['park_name']=='Yellowstone National Park']
+
+concern = species[species['conservation_status']=='Species of Concern']
+endangered = species[species['conservation_status']=='Endangered']
+threatened = species[species['conservation_status']=='Threatened']
+recovery = species[species['conservation_status']=='In Recovery']
+
+concern_obs = pd.merge(species_of_concern, obs, how='left')
+endangered_obs = pd.merge(endangered, obs, how='left')
+threatened_obs = pd.merge(threatened, obs, how='left')
+recovery_obs = pd.merge(recovery, obs, how='left')
+
+# as might be expected, the least-observed species in each national park are categorized as endangered
+# however, some "in recovery" species are also seldom observed
+sns.stripplot(data=species_obs, x='park_name', y='observations', hue='conservation_status')
+plt.xticks(rotation=45)
+plt.show()
+plt.clf()
+
+# let's find out which "in recovery" species are rarely seen
+# based on the plot above, it looks like we can determine this by identifying which "in recovery" species are seen less often than all "threatened" species in the same park
+# we can start by determining the least-observed species categorized as "threatened"
+threatened_bryce = threatened_obs[threatened_obs['park_name']=='Bryce National Park']
+threatened_smoky = threatened_obs[threatened_obs['park_name']=='Great Smoky Mountains National Park']
+threatened_yellowstone = threatened_obs[threatened_obs['park_name']=='Yellowstone National Park']
+threatened_yosemite = threatened_obs[threatened_obs['park_name']=='Yosemite National Park']
+
+threatened_min_bryce = np.min(threatened_bryce['observations'])
+threatened_min_smoky = np.min(threatened_smoky['observations'])
+threatened_min_yellowstone = np.min(threatened_yellowstone['observations'])
+threatened_min_yosemite = np.min(threatened_yosemite['observations'])
+
+# we might as well find out how rarely the least-observed threatened species were seen, and what species that is for each park
+print("At Bryce National Park, the ", threatened_bryce[threatened_bryce['observations']==threatened_min_bryce]['common_names'], " was spotted ", threatened_min_bryce, "times")
+print("At Great Smoky Mountains National Park, the ", threatened_smoky[threatened_smoky['observations']==threatened_min_smoky]['common_names'], " was spotted ", threatened_min_smoky, "times")
+print("At Yellowstone National Park, the ", threatened_yellowstone[threatened_yellowstone['observations']==threatened_min_yellowstone]['common_names'], " was spotted ", threatened_min_yellowstone, "times")
+print("At Yosemite National Park, the ", threatened_yosemite[threatened_yosemite['observations']==threatened_min_yosemite]['common_names'], " was spotted ", threatened_min_yosemite, "times")
+
+# next, we create dataframes for "in recovery" species for each park
+recovery_bryce = recovery_obs[recovery_obs['park_name']=='Bryce National Park']
+recovery_smoky = recovery_obs[recovery_obs['park_name']=='Great Smoky Mountains National Park']
+recovery_yellowstone = recovery_obs[recovery_obs['park_name']=='Yellowstone National Park']
+recovery_yosemite = recovery_obs[recovery_obs['park_name']=='Yosemite National Park']
+
+# and then we create sub-dataframes to find the "in recovery" species in each park that were observed less than the least-observed "threatened" species
+rare_recovery_bryce = recovery_bryce[recovery_bryce['observations'] <= threatened_min_bryce]
+rare_recovery_smoky = recovery_smoky[recovery_smoky['observations'] <= threatened_min_smoky]
+rare_recovery_yellowstone = recovery_yellowstone[recovery_yellowstone['observations'] <= threatened_min_yellowstone]
+rare_recovery_yosemite = recovery_yosemite[recovery_yosemite['observations'] <= threatened_min_yosemite]
+
+# and finally we can print the common name for each "in recovery" species that is rarely observed
+print(rare_recovery_bryce['common_names'])
+print(rare_recovery_smoky['common_names'])
+print(rare_recovery_yellowstone['common_names'])
+print(rare_recovery_yosemite['common_names'])
+
+# in the case of each park, it turns out that the gray wolf is the rarely-observed species in recovery
+
+# now let's see what species are the least-observed overall for each park
+
+least_seen_bryce = species_obs[species_obs['observations'] == np.min(species_obs_bryce['observations'])]
+least_seen_smoky = species_obs[species_obs['observations'] == np.min(species_obs_smoky['observations'])]
+least_seen_yellowstone = species_obs[species_obs['observations'] == np.min(species_obs_yellowstone['observations'])]
+least_seen_yosemite = species_obs[species_obs['observations'] == np.min(species_obs_yosemite['observations'])]
+
+print(least_seen_bryce['common_names'])
+print(least_seen_smoky['common_names'])
+print(least_seen_yellowstone['common_names'])
+print(least_seen_yosemite['common_names'])
+
+# Bryce and Great Smoky each have a single species as their least-observed, while Yellowstone and Yosemite have multiple ties for least-observed
+
+# Since Yellowstone has so many ties for least-observed species, let's compare the distribution of least-observed species by category with the overall distribution of species by category in Yellowstone
+plt.subplot(2, 1, 1)
+sns.countplot(least_seen_yellowstone['category'], order = ['Amphibian', 'Bird', 'Fish', 'Mammal', 'Nonvascular plant', 'Reptile', 'Vascular Plant'])
+plt.subplot(2, 1, 2)
+sns.countplot(species_obs_yellowstone['category'], order = ['Amphibian', 'Bird', 'Fish', 'Mammal', 'Nonvascular plant', 'Reptile', 'Vascular Plant'])
+plt.tight_layout()
+plt.show()
+plt.clf()
+
+# proportionally, mammals and amphibians are overrepresented among least-seen species as compared to their proportion of all observations
+
+# The most interesting finding is that, although it is a species in recovery, the gray wolf is still rarely seen (number of observations on par with endangered species) in all four parks.
+# Another interesting finding is that, proportionally, mammals and amphibians are overrepresented among "least-observed" species at Yellowstone.
+# Additionally, no observations of nonvascular plants were recorded at Yellowstone.
